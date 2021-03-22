@@ -8,14 +8,16 @@ Patrik Bohlinger, Norwegian Meteorological Institute, patrikb@met.no
 This package contains scripts that define the workflow for ARCMFC related tasks. 
 Those tasks comprise:
 1. Downloading Sentinel-3A (s3a) level-3 satellite altimetry data
-2. Collocation of s3a footprints and in-situ platform based observations with the ARCMFC 3km wave model.
-3. Writing the collocated time series to netCDF4 files
-4. Reading from files from 3. and writing to monthly netCDF4 ARCMFC report files
-5. Reading from files from 3. and compute validation files
-6. Based on files from 3. and 5. make validation figures and update webpage
+2. Retrieve in-situ data and write to netCDF4 file
+3. Collocation of s3a footprints with the ARCMFC wave model.
+4. Collocation of in-situ observations with the ARCMFC wave model.
+5. Writing the collocated time series to netCDF4 files
+6. Reading from files from 3. and writing to monthly netCDF4 ARCMFC report files
+7. Reading from files from 3. and compute validation files
+8. Based on files from 3. and 5. make validation figures and update webpage
 
 ## Used data
-The satellite data is obtained from http://marine.copernicus.eu/services-portfolio/access-to-products/?option=com_csw&view=details&product_id=WAVE_GLO_WAV_L3_SWH_NRT_OBSERVATIONS_014_001. In-situ data is obtained at offshore platforms and retrieved from internally stored .d22-files. Model data is retrieved from MET Norway's thredds server.
+The satellite data is obtained from http://marine.copernicus.eu/services-portfolio/access-to-products/?option=com_csw&view=details&product_id=WAVE_GLO_WAV_L3_SWH_NRT_OBSERVATIONS_014_001. In-situ data is obtained at offshore platforms and retrieved from internally stored .d22-files. ARCMFC Model data is retrieved from the publicly accessable MET Norway's thredds server but can also be obtained via Copernicus.
 
 ## Used software
 The scripts build on the "wavy" software which is openly available at github.
@@ -61,9 +63,9 @@ Add your path for satellite data here under cmems:
         level: 3
         satellite: s3a, s3b, c2, al, j3, h2b, cfo
         local:
-            path: /home/patrikb/tmp_altimeter
+            path: /path/to/satellite/files
 ```
-
+The path could be defined e.g. like: path: /home/patrikb/tmp_altimeter
 ### HELP
 Executable files usually have help function which can be read using e.g.:
 ```
@@ -92,6 +94,13 @@ To get help check ...
 ```
 As input the start date (sd) and the end date (ed) are required. If those are None, the last 24 hours are download. The data is automatically organized in {path}/{year}/{month}.
 
-### 2. Collocation of obs with model
-1. satellite data
-2. In-situ data
+### 2. Retrieve in-situ data
+### 3. Collocation of satellite data with model
+```
+./collocate_sat.py -sat s3a -sd 2020103000 -ed 2020111000
+```
+### 4. Collocation of in-situ data with model
+```
+./collocate_sat.py -platform ekofisk -sensor waverider -sd 2020103000 -ed 2020111000
+```
+### 5. Write collocated time series to netCDF4 file
