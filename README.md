@@ -27,7 +27,7 @@ The collocation method follows Bohlinger et al. (2019): https://www.sciencedirec
 ### Installing wavy
 1. First download or clone the wavy github repository:
 ```
-git clone --single-branch --branch ARCMFC https://github.com/bohlinger/wavy.git
+git clone --single-branch --branch ARCMFC git@github.com:bohlinger/wavy.git
 ```
 Info on how-to clone a repository:
 https://help.github.com/en/articles/cloning-a-repository
@@ -42,3 +42,51 @@ conda activate wavy
 ```
 Info on installing conda, e.g.:
 https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
+
+4. Configuration files are organized under wavy/config and might need adjustments according to your plans. Examples are the locations of your wave model output files or observation data (e.g. satellite altimetry data). What is needed for this workshop is shown below.
+
+5. Prepare access to Copernicus products. Enter your account credentials into the .netrc-file. Your .netrc should look something like:
+```
+machine nrt.cmems-du.eu    login {USER}  password {PASSWORD}
+```
+
+6. Prepare your wavy environment with providing the directories for satellite data and model data. There are multiple config files but we only need to worry about a few for now. Explore the config file for satellites like this:
+```
+cd ~/wavy/config
+vim satellite_specs.yaml
+```
+Add your path for satellite data here under cmems:
+```
+    cmems:
+        level: 3
+        satellite: s3a, s3b, c2, al, j3, h2b, cfo
+        local:
+            path: /home/patrikb/tmp_altimeter
+```
+
+### HELP
+Executable files usually have help function which can be read using e.g.:
+```
+./{YourExecutable}.py -h
+```
+
+e.g.:
+```
+cd ~/wavy/wavy
+./download.py -h
+```
+
+## 1. Download satellite data
+Then download satellite data using the download.py script:
+```
+cd ~/wavy/wavy
+```
+To get help check ...
+```
+./download.py -h
+```
+... then download some satellite altimeter data:
+```
+./download.py -sat s3a -sd 2020103000 -ed 2020111000
+```
+As input the start date (sd) and the end date (ed) are required. If those are None, the last 24 hours are download. The data is automatically organized in {path}/{year}/{month}.
