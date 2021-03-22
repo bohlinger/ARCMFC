@@ -76,7 +76,8 @@ cd ~/wavy/wavy
 ./download.py -h
 ```
 
-## 1. Download satellite data
+## Workflow
+### 1. Download satellite data
 Then download satellite data using the download.py script:
 ```
 cd ~/wavy/wavy
@@ -90,3 +91,7 @@ To get help check ...
 ./download.py -sat s3a -sd 2020103000 -ed 2020111000
 ```
 As input the start date (sd) and the end date (ed) are required. If those are None, the last 24 hours are download. The data is automatically organized in {path}/{year}/{month}.
+
+### 2. Collocation of obs with model
+1. satellite data
+2. In-situ data
