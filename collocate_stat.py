@@ -15,11 +15,12 @@ from utils import system_call
 # --- parser --- #
 parser = argparse.ArgumentParser(
     description="""
-Retrieve data from in-situ stations and dumps to monthly nc-file.
+Retrieve data from in-sistu stations, collocate with model,\n 
+and dump data to monthly nc-file.
 If file exists, data is appended.
 
 Usage:
-./collect_stat.py -sd 2021010100 -ed 2021013123 -stat all
+./collocate_stat.py -sd 2021010100 -ed 2021013123 -stat all
     """,
     formatter_class = RawTextHelpFormatter
     )
@@ -28,11 +29,15 @@ parser.add_argument("-sd", metavar='startdate',
 parser.add_argument("-ed", metavar='enddate',
     help="end date of time period")
 parser.add_argument("-var", metavar='varname',
-    help="variable name"),
+    help="variable name")
 parser.add_argument("-station", metavar='stationname',
     help="station name")
 parser.add_argument("-sensor", metavar='sensorname',
     help="sensor name")
+parser.add_argument("-model", metavar='modelname',
+    help="model name")
+parser.add_argument("-lt", metavar='leadtime',
+    help="leadtime")
 
 args = parser.parse_args()
 
@@ -51,11 +56,17 @@ else:
 if args.var is None:
     args.var = 'Hs'
 
+if args.model is None:
+    args-model = 'mwam4'
+
+if args.lt is None:
+    args.lt = 0
+
 print(args)
 
-print( '# Start process of collecting platform' 
-        + ' data and dump to nc-file #')
-
+print( '# Start process of collecting platform'
+        + ' data, collocate with model,'
+        + ' and dump to nc-file #')
 # --- prerequisites --- #
 
 # find wavy path
@@ -79,8 +90,39 @@ for station in platformlst:
         print('station:',station,'; with sensor:',sensor)
         st_obj = station_class(station,sensor,args.sd,args.ed,
                                    varalias=args.var)
+        col_obj = collocation_class(model=model,st_obj=st_obj,distlim=distlim,
+                                    leadtime=leadtime,date_incr=data_incr)
         # --- write to nc --- #
-        st_obj.write_to_monthly_nc()
- 
-print( '# Finished process of collecting platform' 
-        + ' data and dump to nc-file #')
+        col_obj.write_to_monthly_nc()
+
+print( '# Finished process of collecting platform'
+        + ' data, collocate with model,'
+        + ' and dump to nc-file #')
+
+
+
+
+
+
+
+
+
+
+statname = 'ekofiskL'
+sensor = 'waverider'
+varalias = 'Hs'
+sd = datetime(2020,12,1)
+ed = datetime(2020,12,3,23)
+
+st_obj = station_class('ekofiskL','waverider',sd,ed,varalias=varalias)
+
+model = 'mwam4'
+col_obj = collocation_class(model=model,st_obj=st_obj,distlim=6,date_incr=1)
+
+import matplotlib.pyplot as plt
+plt.plot(st_obj.vars['datetime'],st_obj.vars['sea_surface_wave_significant_height'],'k--')
+plt.plot(col_obj.vars['datetime'],col_obj.vars['obs_values'],'ko')
+plt.plot(col_obj.vars['datetime'],col_obj.vars['model_values'],'rx')
+plt.show()
+
+# save collocated data
