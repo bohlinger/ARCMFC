@@ -101,9 +101,12 @@ As input the start date (sd) and the end date (ed) are required. If those are No
 
 ### 2. Retrieve in-situ data
 ```
-./collect_stat_all.py -sd 20201030000 -ed 2020111000
+./collect_stat.py -sd 20201030000 -ed 2020111000
 ```
-
+or to cover only the previous day
+```
+./collect_stat.py
+```
 ### 3. Collocation of in-situ data with model
 ```
 ./collocate_sat.py -sat s3a -sd 2020103000 -ed 2020111000
