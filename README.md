@@ -7,13 +7,13 @@ Patrik Bohlinger, Norwegian Meteorological Institute, patrikb@met.no
 ## Purpose
 This package contains scripts that define the workflow for ARCMFC related tasks. 
 Those tasks comprise:
---> Downloading Sentinel-3A (s3a) level-3 satellite altimetry data
---> Retrieve in-situ data and write to netCDF4 file
---> Collocation of in-situ observations with the ARCMFC wave model and write to nc.
---> Collocation of s3a footprints with the ARCMFC wave model and write to nc.
---> Read from in-situ files and write to monthly netCDF4 ARCMFC report files
---> Read from satellite files and create validation statistics files
---> make validation figures and update webpage
+* Downloading Sentinel-3A (s3a) level-3 satellite altimetry data
+* Retrieve in-situ data and write to netCDF4 file
+* Collocation of in-situ observations with the ARCMFC wave model and write to nc
+* Collocation of s3a footprints with the ARCMFC wave model and write to nc
+* Read from in-situ files and write to monthly netCDF4 ARCMFC report files
+* Read from satellite files and create validation statistics files
+* make validation figures and update webpage
 
 ## Used data
 The satellite data is obtained from http://marine.copernicus.eu/services-portfolio/access-to-products/?option=com_csw&view=details&product_id=WAVE_GLO_WAV_L3_SWH_NRT_OBSERVATIONS_014_001. In-situ data is obtained at offshore platforms and retrieved from internally stored .d22-files. ARCMFC Model data is retrieved from the publicly accessable MET Norway's thredds server but can also be obtained via Copernicus.
