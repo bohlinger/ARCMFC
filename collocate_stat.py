@@ -38,6 +38,8 @@ parser.add_argument("-model", metavar='modelname',
     help="model name")
 parser.add_argument("-lt", metavar='leadtime',
     help="leadtime")
+parser.add_argument("-dist", metavar='distance',
+    help="distance limit for collocation")
 
 args = parser.parse_args()
 
@@ -48,7 +50,7 @@ else:
     args.sd = datetime(int(args.sd[0:4]),int(args.sd[4:6]),
                 int(args.sd[6:8]),int(args.sd[8:10]))
 if args.ed is None:
-    args.ed = datetime(now.year,now.month,now.day)
+    args.ed = datetime(now.year,now.month,now.day)-timedelta(minutes=1)
 else:
     args.ed = datetime(int(args.ed[0:4]),int(args.ed[4:6]),
                 int(args.ed[6:8]),int(args.ed[8:10]))
@@ -57,16 +59,20 @@ if args.var is None:
     args.var = 'Hs'
 
 if args.model is None:
-    args-model = 'mwam4'
+    args.model = 'mwam4'
 
 if args.lt is None:
     args.lt = 0
 
+if args.dist is None:
+    args.dist = 6
+
 print(args)
 
 print( '# Start process of collecting platform'
-        + ' data, collocate with model,'
+        + ' data, collocate with model,\n'
         + ' and dump to nc-file #')
+
 # --- prerequisites --- #
 
 # find wavy path
@@ -84,19 +90,21 @@ if (args.station is None or args.station == 'all'):
 else:
     platformlst = [args.station]
 
+date_incr = 1
+
 # --- program body --- #
 for station in platformlst:
     for sensor in station_dict['platform'][station]['sensor']:
         print('station:',station,'; with sensor:',sensor)
         st_obj = station_class(station,sensor,args.sd,args.ed,
                                    varalias=args.var)
-        col_obj = collocation_class(model=model,st_obj=st_obj,distlim=distlim,
-                                    leadtime=leadtime,date_incr=data_incr)
+        col_obj = collocation_class(model=model,st_obj=st_obj,distlim=dist,
+                                    leadtime=args.lt,date_incr=data_incr)
         # --- write to nc --- #
         col_obj.write_to_monthly_nc()
 
 print( '# Finished process of collecting platform'
-        + ' data, collocate with model,'
+        + ' data, collocate with model,\n'
         + ' and dump to nc-file #')
 
 
@@ -108,21 +116,19 @@ print( '# Finished process of collecting platform'
 
 
 
-statname = 'ekofiskL'
-sensor = 'waverider'
-varalias = 'Hs'
-sd = datetime(2020,12,1)
-ed = datetime(2020,12,3,23)
-
-st_obj = station_class('ekofiskL','waverider',sd,ed,varalias=varalias)
-
-model = 'mwam4'
-col_obj = collocation_class(model=model,st_obj=st_obj,distlim=6,date_incr=1)
-
-import matplotlib.pyplot as plt
-plt.plot(st_obj.vars['datetime'],st_obj.vars['sea_surface_wave_significant_height'],'k--')
-plt.plot(col_obj.vars['datetime'],col_obj.vars['obs_values'],'ko')
-plt.plot(col_obj.vars['datetime'],col_obj.vars['model_values'],'rx')
-plt.show()
-
-# save collocated data
+#statname = 'ekofiskL'
+#sensor = 'waverider'
+#varalias = 'Hs'
+#sd = datetime(2020,12,1)
+#ed = datetime(2020,12,3,23)
+#
+#st_obj = station_class('ekofiskL','waverider',sd,ed,varalias=varalias)
+#
+#model = 'mwam4'
+#col_obj = collocation_class(model=model,st_obj=st_obj,distlim=6,date_incr=1)
+#
+#import matplotlib.pyplot as plt
+#plt.plot(st_obj.vars['datetime'],st_obj.vars['sea_surface_wave_significant_height'],'k--')
+#plt.plot(col_obj.vars['datetime'],col_obj.vars['obs_values'],'ko')
+#plt.plot(col_obj.vars['datetime'],col_obj.vars['model_values'],'rx')
+#plt.show()
