@@ -97,7 +97,8 @@ To get help check ...
 ```
 As input the start date (sd) and the end date (ed) are required. If those are None, the last 24 hours are download. The data is automatically organized in {path}/{year}/{month}.
 
-### Retrieve in-situ data (defined station_specs.yaml, d22_var_dicts.yaml)
+### Retrieve in-situ data
+- [x] defined in station_specs.yaml, d22_var_dicts.yaml
 ```
 ./collect_stat.py -sd 20201030000 -ed 2020111000
 ```
@@ -106,6 +107,7 @@ or to cover only the previous day
 ./collect_stat.py
 ```
 ### Collocation of in-situ data with model
+- [x] defined in model_specs.yaml, station_specs.yaml, d22_var_dicts.yaml, collocation_specs.yaml
 ```
 ./collocate_stat.py -platform ekofisk -sensor waverider -sd 2020103000 -ed 2020111000
 ```
@@ -117,7 +119,8 @@ or to cover only the previous day
 ```
 ./collocate_stat.py
 ```
-### Collocation of satellite data with ARCMFC model (defined in model_specs.yaml)
+### Collocation of satellite data with ARCMFC model
+- [x] defined in satellite_specs.yaml, model_specs.yaml, collocation_specs.yaml
 ```
 ./collocate_sat.py -sat s3a -mod ARCMFC3 -sd 2020103000 -ed 2020111000
 ```
