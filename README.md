@@ -7,15 +7,13 @@ Patrik Bohlinger, Norwegian Meteorological Institute, patrikb@met.no
 ## Purpose
 This package contains scripts that define the workflow for ARCMFC related tasks. 
 Those tasks comprise:
-1. Downloading Sentinel-3A (s3a) level-3 satellite altimetry data
-2. Retrieve in-situ data and write to netCDF4 file
-3. Collocation of in-situ observations with the ARCMFC wave model.
-4. Collocation of s3a footprints with the ARCMFC wave model.
-5. Writing the collocated time series to netCDF4 files
-6. Reading from files from 3. and create validation statistics files
-7. Reading from files from 3. and writing to monthly netCDF4 ARCMFC report files
-8. Reading files from 4. and create validation statistics file
-9. Based on files from 5. and 8. make validation figures and update webpage
+--> Downloading Sentinel-3A (s3a) level-3 satellite altimetry data
+--> Retrieve in-situ data and write to netCDF4 file
+--> Collocation of in-situ observations with the ARCMFC wave model and write to nc.
+--> Collocation of s3a footprints with the ARCMFC wave model and write to nc.
+--> Read from in-situ files and write to monthly netCDF4 ARCMFC report files
+--> Read from satellite files and create validation statistics files
+--> make validation figures and update webpage
 
 ## Used data
 The satellite data is obtained from http://marine.copernicus.eu/services-portfolio/access-to-products/?option=com_csw&view=details&product_id=WAVE_GLO_WAV_L3_SWH_NRT_OBSERVATIONS_014_001. In-situ data is obtained at offshore platforms and retrieved from internally stored .d22-files. ARCMFC Model data is retrieved from the publicly accessable MET Norway's thredds server but can also be obtained via Copernicus.
@@ -84,7 +82,7 @@ cd ~/wavy/wavy
 ```
 
 ## Workflow
-### 1. Download satellite data
+### Download satellite data
 Then download satellite data using the download.py script:
 ```
 cd ~/wavy/wavy
@@ -99,7 +97,7 @@ To get help check ...
 ```
 As input the start date (sd) and the end date (ed) are required. If those are None, the last 24 hours are download. The data is automatically organized in {path}/{year}/{month}.
 
-### 2. Retrieve in-situ data
+### Retrieve in-situ data
 ```
 ./collect_stat.py -sd 20201030000 -ed 2020111000
 ```
@@ -107,15 +105,27 @@ or to cover only the previous day
 ```
 ./collect_stat.py
 ```
-### 3. Collocation of in-situ data with model
-```
-./collocate_sat.py -sat s3a -sd 2020103000 -ed 2020111000
-```
-
-### 4. Collocation of satellite data with model
+### Collocation of in-situ data with model
 ```
 ./collocate_stat.py -platform ekofisk -sensor waverider -sd 2020103000 -ed 2020111000
-./collocate_all.py -sd 2020103000 -ed 2020111000
 ```
-
-### 5. Write collocated time series to netCDF4 file
+... or for all stations/sensors:
+```
+./collocate_stat.py -sd 2020103000 -ed 2020111000
+```
+... or for the previous day simply:
+```
+./collocate_stat.py
+```
+### Collocation of satellite data with ARCMFC model as defined in model_specs.yaml
+```
+./collocate_sat.py -sat s3a -mod ARCMFC3 -sd 2020103000 -ed 2020111000
+```
+... or for the previous day simply:
+```
+./collocate_sat.py -sat s3a -mod ARCMRC3
+```
+### From in-situ files to monthly netCDF4 ARCMFC files
+```
+./make_monthly_ARCMFC_file.py -d 202011
+```
