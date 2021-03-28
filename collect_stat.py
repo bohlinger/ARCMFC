@@ -38,12 +38,12 @@ args = parser.parse_args()
 
 now = datetime.now()
 if args.sd is None:
-    args.sd = datetime(now.year,now.month,now.day,0)-timedelta(days=1)
+    args.sd = datetime(now.year,now.month,now.day)-timedelta(days=1)
 else:
     args.sd = datetime(int(args.sd[0:4]),int(args.sd[4:6]),
                 int(args.sd[6:8]),int(args.sd[8:10]))
 if args.ed is None:
-    args.ed = datetime(now.year,now.month,now.day)
+    args.ed = datetime(now.year,now.month,now.day)-timedelta(minutes=1)
 else:
     args.ed = datetime(int(args.ed[0:4]),int(args.ed[4:6]),
                 int(args.ed[6:8]),int(args.ed[8:10]))
@@ -63,7 +63,9 @@ tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
 wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
 
 # get variable info
-configdir = os.path.abspath(os.path.join(wavydir, '..', 'config/station_specs.yaml'))
+configdir = os.path.abspath(os.path.join(wavydir, 
+                                         '..', 
+                                         'config/station_specs.yaml'))
 with open(configdir,'r') as stream:
     station_dict=yaml.safe_load(stream)
 

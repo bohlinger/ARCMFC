@@ -33,8 +33,6 @@ parser.add_argument("-var", metavar='varname',
     help="variable name")
 parser.add_argument("-station", metavar='stationname',
     help="station name")
-parser.add_argument("-sensor", metavar='sensorname',
-    help="sensor name")
 parser.add_argument("-model", metavar='modelname',
     help="model name")
 parser.add_argument("-lt", metavar='leadtime',
@@ -81,7 +79,9 @@ tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
 wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
 
 # get variable info
-configdir = os.path.abspath(os.path.join(wavydir, '..', 'config/station_specs.yaml'))
+configdir = os.path.abspath(os.path.join(wavydir, 
+                                         '..', 
+                                         'config/station_specs.yaml'))
 with open(configdir,'r') as stream:
     station_dict=yaml.safe_load(stream)
 
@@ -109,29 +109,3 @@ for station in platformlst:
 print( '# Finished process of collecting platform'
         + ' data, collocate with model,\n'
         + ' and dump to nc-file #')
-
-
-
-
-
-
-
-
-
-
-#statname = 'ekofiskL'
-#sensor = 'waverider'
-#varalias = 'Hs'
-#sd = datetime(2020,12,1)
-#ed = datetime(2020,12,3,23)
-#
-#st_obj = station_class('ekofiskL','waverider',sd,ed,varalias=varalias)
-#
-#model = 'mwam4'
-#col_obj = collocation_class(model=model,st_obj=st_obj,distlim=6,date_incr=1)
-#
-#import matplotlib.pyplot as plt
-#plt.plot(st_obj.vars['datetime'],st_obj.vars['sea_surface_wave_significant_height'],'k--')
-#plt.plot(col_obj.vars['datetime'],col_obj.vars['obs_values'],'ko')
-#plt.plot(col_obj.vars['datetime'],col_obj.vars['model_values'],'rx')
-#plt.show()

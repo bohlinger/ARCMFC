@@ -82,16 +82,8 @@ cd ~/wavy/wavy
 ```
 
 ## Workflow
-### Download satellite data (defined in satellite_specs.yaml)
-Then download satellite data using the download.py script:
-```
-cd ~/wavy/wavy
-```
-To get help check ...
-```
-./download.py -h
-```
-... then download some satellite altimeter data:
+### Download satellite data 
+- [x] defined in: satellite_specs.yaml
 ```
 ./download.py -sat s3a -sd 2020103000 -ed 2020111000
 ```

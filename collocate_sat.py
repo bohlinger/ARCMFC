@@ -9,14 +9,14 @@ import argparse
 from argparse import RawTextHelpFormatter
 
 # custom
-from stationmod import station_class
+from satmod import satellite_class
 from collocmod import collocation_class
 from utils import system_call
 
 # --- parser --- #
 parser = argparse.ArgumentParser(
     description="""
-Retrieve data from in-sistu stations, collocate with model,\n 
+Retrieve data from satellite altimeter, collocate with model,\n 
 and dump data to monthly nc-file.
 If file exists, data is appended.
 
@@ -31,16 +31,16 @@ parser.add_argument("-ed", metavar='enddate',
     help="end date of time period")
 parser.add_argument("-var", metavar='varname',
     help="variable name")
-parser.add_argument("-station", metavar='stationname',
-    help="station name")
-parser.add_argument("-sensor", metavar='sensorname',
-    help="sensor name")
+parser.add_argument("-sat", metavar='satname',
+    help="satellite name")
 parser.add_argument("-model", metavar='modelname',
     help="model name")
 parser.add_argument("-lt", metavar='leadtime',
     help="leadtime")
 parser.add_argument("-dist", metavar='distance',
     help="distance limit for collocation")
+parser.add_argument("-twin", metavar='timewindow',
+    help="time limit for collocation")
 
 args = parser.parse_args()
 
@@ -68,9 +68,12 @@ if args.lt is None:
 if args.dist is None:
     args.dist = 6
 
+if args.twin is None:
+    args.twin = 30
+
 print(args)
 
-print( '# Start process of collecting platform'
+print( '# Start process of collecting satellite'
         + ' data, collocate with model,\n'
         + ' and dump to nc-file #')
 
@@ -81,57 +84,32 @@ tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
 wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
 
 # get variable info
-configdir = os.path.abspath(os.path.join(wavydir, '..', 'config/station_specs.yaml'))
+configdir = os.path.abspath(os.path.join(wavydir, 
+                                         '..', 
+                                         'config/satellite_specs.yaml'))
 with open(configdir,'r') as stream:
-    station_dict=yaml.safe_load(stream)
+    satellite_dict=yaml.safe_load(stream)
 
 # settings
-if (args.station is None or args.station == 'all'):
-    platformlst = station_dict['platform'].keys()
-else:
-    platformlst = [args.station]
+if (args.sat is None):
+    args.sat = 's3a'
 
 date_incr = 1
 
 # --- program body --- #
-for station in platformlst:
-    for sensor in station_dict['platform'][station]['sensor']:
-        print('station:',station,'; with sensor:',sensor)
-        st_obj = station_class(station,sensor,args.sd,args.ed,
-                                   varalias=args.var)
-        col_obj = collocation_class(model=args.model,st_obj=st_obj,
-                                    distlim=args.dist,
-                                    leadtime=args.lt,
-                                    date_incr=date_incr)
-        # --- write to nc --- #
-        col_obj.write_to_monthly_nc()
+print('station:',station,'; with sensor:',sensor)
+sa_obj = satellite_class(sdate=args.sd,region=args.model,sat=args.sat,
+                         varalias=args.var,twin=args.twin)
+mc_obj = model_class(fc_date=args.sd,varalias=args.var)
+col_obj = collocation_class(mc_obj,sa_obj=sa_obj,distlim=args.dist)
+#col_obj = collocation_class(model=args.model,
+#                            sat_obj=sat_obj,
+#                            distlim=args.dist,
+#                            leadtime=args.lt,
+#                            date_incr=date_incr)
+# --- write to nc --- #
+col_obj.write_to_monthly_nc()
 
-print( '# Finished process of collecting platform'
+print( '# Finished process of collecting satellite'
         + ' data, collocate with model,\n'
         + ' and dump to nc-file #')
-
-
-
-
-
-
-
-
-
-
-#statname = 'ekofiskL'
-#sensor = 'waverider'
-#varalias = 'Hs'
-#sd = datetime(2020,12,1)
-#ed = datetime(2020,12,3,23)
-#
-#st_obj = station_class('ekofiskL','waverider',sd,ed,varalias=varalias)
-#
-#model = 'mwam4'
-#col_obj = collocation_class(model=model,st_obj=st_obj,distlim=6,date_incr=1)
-#
-#import matplotlib.pyplot as plt
-#plt.plot(st_obj.vars['datetime'],st_obj.vars['sea_surface_wave_significant_height'],'k--')
-#plt.plot(col_obj.vars['datetime'],col_obj.vars['obs_values'],'ko')
-#plt.plot(col_obj.vars['datetime'],col_obj.vars['model_values'],'rx')
-#plt.show()
