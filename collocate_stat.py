@@ -95,7 +95,7 @@ date_incr = 1
 
 # --- program body --- #
 for station in platformlst:
-    for sensor in station_dict['platform'][station]['sensor']:
+    for sensor in station_dict['platform'][station]['sensor'].keys():
         print('station:',station,'; with sensor:',sensor)
         st_obj = station_class(station,sensor,args.sd,args.ed,
                                    varalias=args.var)
