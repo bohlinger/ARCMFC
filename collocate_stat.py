@@ -52,13 +52,13 @@ if args.ed is None:
     args.ed = datetime(now.year,now.month,now.day)-timedelta(minutes=1)
 else:
     args.ed = datetime(int(args.ed[0:4]),int(args.ed[4:6]),
-                int(args.ed[6:8]),int(args.ed[8:10]))
+                int(args.ed[6:8]),int(args.ed[8:10]))-timedelta(minutes=1)
 
 if args.var is None:
     args.var = 'Hs'
 
 if args.model is None:
-    args.model = 'mwam4'
+    args.model = 'ARCMFC3'
 
 if args.lt is None:
     args.lt = 0
@@ -91,20 +91,42 @@ if (args.station is None or args.station == 'all'):
 else:
     platformlst = [args.station]
 
-date_incr = 1
+date_incr = 1 # model time step
+
+def get_and_store_data(platformlst,sd,ed,var,date_incr,model,lt,dist):
+    for station in platformlst:
+        for sensor in station_dict['platform'][station]['sensor']:
+            try:
+                print('station:',station,'; with sensor:',sensor)
+                st_obj = station_class(station,sensor,sd,ed,
+                                               varalias=var)
+                col_obj = collocation_class(model=model,st_obj=st_obj,
+                                                distlim=dist,
+                                                leadtime=lt,
+                                                date_incr=date_incr)
+                # --- write to nc --- #
+                col_obj.write_to_monthly_nc()
+            except Exception as e:
+                print(e)
 
 # --- program body --- #
-for station in platformlst:
-    for sensor in station_dict['platform'][station]['sensor'].keys():
-        print('station:',station,'; with sensor:',sensor)
-        st_obj = station_class(station,sensor,args.sd,args.ed,
-                                   varalias=args.var)
-        col_obj = collocation_class(model=args.model,st_obj=st_obj,
-                                    distlim=args.dist,
-                                    leadtime=args.lt,
-                                    date_incr=date_incr)
-        # --- write to nc --- #
-        col_obj.write_to_monthly_nc()
+'''
+Since station data comes in daily files I choose a daily loop
+from sd to ed. Any time period could be chosen but it seems that
+this way it is more stable as there are many missing files and
+directories.
+'''
+tmpdate = args.sd
+leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]    
+while tmpdate <= args.ed:
+    for lt in leadtimes:
+        print('DATE: ',tmpdate)
+        print('LEADTIME: ',lt)
+        sd = tmpdate
+        ed = tmpdate
+        get_and_store_data( platformlst,sd,ed,args.var,
+                            date_incr,args.model,lt,args.dist)
+    tmpdate = tmpdate + timedelta(hours=12)
 
 print( '# Finished process of collecting platform'
         + ' data, collocate with model,\n'
