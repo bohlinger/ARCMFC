@@ -21,7 +21,7 @@ and dump data to monthly nc-file.
 If file exists, data is appended.
 
 Usage:
-./collocate_stat.py -sd 2021010100 -ed 2021013123 -stat all
+./collocate_stat.py -sd 2021010100 -ed 2021013123
     """,
     formatter_class = RawTextHelpFormatter
     )
@@ -79,10 +79,12 @@ tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
 wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
 
 # get variable info
-configdir = os.path.abspath(os.path.join(wavydir, 
-                                         '..', 
-                                         'config/station_specs.yaml'))
-with open(configdir,'r') as stream:
+#configdir = os.path.abspath(os.path.join(wavydir, 
+#                                         '..', 
+#                                         'config/station_specs.yaml'))
+configfile = os.path.abspath(os.path.join(os.path.dirname( __file__ ), \
+                            'config/station_specs_ARCMFC.yaml'))
+with open(configfile,'r') as stream:
     station_dict=yaml.safe_load(stream)
 
 # settings
