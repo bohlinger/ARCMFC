@@ -11,7 +11,6 @@ from argparse import RawTextHelpFormatter
 # custom
 from stationmod import station_class
 from collocmod import collocation_class
-from utils import system_call
 
 # --- parser --- #
 parser = argparse.ArgumentParser(
@@ -74,14 +73,7 @@ print( '# Start process of collecting platform'
 
 # --- prerequisites --- #
 
-# find wavy path
-tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
-wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
-
 # get variable info
-#configdir = os.path.abspath(os.path.join(wavydir, 
-#                                         '..', 
-#                                         'config/station_specs.yaml'))
 configfile = os.path.abspath(os.path.join(os.path.dirname( __file__ ), \
                             'config/station_specs_ARCMFC.yaml'))
 with open(configfile,'r') as stream:
@@ -114,12 +106,12 @@ def get_and_store_data(platformlst,sd,ed,var,date_incr,model,lt,dist):
 # --- program body --- #
 '''
 Since station data comes in daily files I choose a daily loop
-from sd to ed. Any time period could be chosen but it seems that
-this way it is more stable as there are many missing files and
-directories.
+from sd to ed. I also choose 12hourly steps. Any time period 
+could be chosen but it seems that this way it is more stable 
+as there are many missing files and directories.
 '''
 tmpdate = args.sd
-leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]    
+leadtimes = [0, 12]#, 36, 60, 84, 108, 132, 156, 180, 204, 228]
 while tmpdate <= args.ed:
     for lt in leadtimes:
         print('DATE: ',tmpdate)

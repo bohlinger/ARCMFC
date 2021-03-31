@@ -127,10 +127,8 @@ platform:
     sleipner:
         sensor:
             MKIIIradar: 0 # python indexing
-            NA_1: 1
         manufacturer:
             MKIIIradar: Miros
-            NA_1: NA
         coords:
             lat: 58.37
             lon: 1.91
