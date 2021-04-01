@@ -18,7 +18,8 @@ Consists of:
     - create netcdf file skeleton
     - write to netcdf file
 """
-leadtimes = [0, 12]#, 36, 60, 84, 108, 132, 156, 180, 204, 228]
+#leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
+leadtimes = [0, 12, 36, 60]
 
 # get variable info
 configfile = os.path.abspath(os.path.join(os.path.dirname( __file__ ), \
@@ -35,8 +36,8 @@ def validation(filedate,leadtime,station_dict):
     inpath = filedate.strftime('/home/patrikb/tmp_collocation/%Y/%m/')
     mop,mor,nov,msd = [],[],[],[]
     datelst = []
-    sdate = (filedate.year, filedate.month,1)
-    edate = (filedate.year, filedate.month,
+    sdate = datetime(filedate.year, filedate.month,1)
+    edate = datetime(filedate.year, filedate.month,
             calendar.monthrange(filedate.year, filedate.month)[1],
             23)
     tmpdate = sdate
@@ -45,31 +46,31 @@ def validation(filedate,leadtime,station_dict):
         obs = []
         # get data
         for platform in station_dict['platform']:
-            sensor = list(station_dict['platform']['draugen']\
+            sensor = list(station_dict['platform'][platform]\
                                         ['sensor'].keys())[0]
             filestr = filedate.strftime(   "Hs_ARCMFC3_vs_" 
                                     + platform + "_"
                                     + sensor + "_coll_ts_lt" 
-                                    + "{:0>3d}h".format(leadtime) 
+                                    + "{:0>3d}".format(leadtime) 
                                     + "h_%Y%m.nc" )
-            nc = netCDF4.Dataset(inpath,mode=r)
-            time = nc.varaibles['time']
+            nc = netCDF4.Dataset(inpath+filestr,mode='r')
+            time = nc.variables['time']
             dt = list(netCDF4.num2date(time[:],time.units))
             time_unit = time.units
             if tmpdate in dt:
-                mod = nc.variables['model_values'][idx]
-                ob = nc.variables['obs_values'][idx]
-            else: 
+                mod = float(nc.variables['model_values'][dt.index(tmpdate)])
+                ob = float(nc.variables['obs_values'][dt.index(tmpdate)])
+            else:
                 mod = np.nan
                 ob = np.nan
             nc.close()
             mods.append(mod)
             obs.append(ob)
-            datelst.append(d)
+        datelst.append(tmpdate)
         # compute skill scores
         mop.append(np.nanmean(mods))
         mor.append(np.nanmean(obs))
-        nov.append(len(mods[mod!=np.nan]))
+        nov.append(len(np.array(mods)[np.array(mods)!=np.nan]))
         msd.append(calc_rmsd(np.array(mods),np.array(obs))[0])
         datelst.append(tmpdate)
         tmpdate += timedelta(hours=12)
@@ -108,6 +109,9 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
                                                 "mean of reference", 
                                                 "mean square difference", 
                                                 "number of data values"]]
+    area_names = [name.ljust(28) for name in ["North Sea and Norwegian Sea",
+                                              "Full domain",
+                                              "Nordic Seas"]]
     dimsize = None
     dimtime = nc.createDimension(
                                 'time',
@@ -129,38 +133,31 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
 
     nc_metricnames = nc.createVariable('metric_names','S1', \
                         dimensions=(u'metrics',u'string_length'))
-    print(nc_metricnames)
     def split(word):
         return [char for char in word]
     #nc_metricnames[:] = netCDF4.stringtochar(np.array(metric_names))
-    print('Shape:' ,np.array(metric_names).shape)
     for i in range(4):
         nc_metricnames[i,:] = split(metric_names[i])
 
     nc_areanames = nc.createVariable('area_names','S1', \
                     dimensions=(u'areas',u'string_length'))
-    nc_areanames[0] = netCDF4.stringtochar(\
-                        np.array('North Sea and Norwegian Sea'.ljust(28)))
-    nc_areanames[1] = netCDF4.stringtochar(\
-                        np.array('Full domain                '.ljust(28)))
-    nc_areanames[2] = netCDF4.stringtochar(\
-                        np.array('Nordic Seas              '.ljust(28)))
+    for i in range(3):
+        #nc_areanames[0] = netCDF4.stringtochar(\
+        #                np.array('North Sea and Norwegian Sea'.ljust(28)))
+        nc_areanames[i,:] = split(area_names[i])
     nc_areanames.long_name = 'area names'
     nc_areanames.description = 'region over which statistics are aggregated'
 
     nc_leadtime = nc.createVariable('forecasts','f4',dimensions=('forecasts'))
     nc_leadtime.long_name = 'forecast lead time'
     nc_leadtime.units = 'hours'
-    nc_leadtime[:] = sp.arange(12,229,24)
+    nc_leadtime[:] = np.arange(12,229,24)
 
-    varArcMFCname = {'Hs': 'stats_VHM0'}
-    varstandardname = {'Hs':'sea_surface_wave_significant_height'}
-
-    ncvar = nc.createVariable(varArcMFCname[varname],'f4', 
+    ncvar = nc.createVariable('stats_VHM0_platform','f4', 
                 dimensions=('time', 'forecasts', 'surface', \
                             'metrics', 'areas'), fill_value=9999.)
-    ncvar.standard_name = varstandardname[varname]
-    ncvar.parameter = varArcMFCname[varname]
+    ncvar.standard_name = 'sea_surface_wave_significant_height'
+    ncvar.parameter = 'stats_VHM0_platform'
     ncvar.units = 'm'
     ncvar.reference_source = 'wave data from offshore platforms '\
                             +'available from d22 files at the '\
@@ -168,12 +165,13 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
 
 
     print ("Add platform statistics")
-    for leadtime in range(len(leadtimes)):
-        validation_dict = validation(filedate,leadtime,station_dict)
-        ncvar[:,leadtime,0,0,0] = validation_dict['mop']
-        ncvar[:,leadtime,0,1,0] = validation_dict['mor']
-        ncvar[:,leadtime,0,2,0] = validation_dict['msd']
-        ncvar[:,leadtime,0,3,0] = validation_dict['nov']
+    for l in range(len(leadtimes)):
+        print('Validate for leadtime:',leadtimes[l])
+        validation_dict = validation(filedate,leadtimes[l],station_dict)
+        ncvar[:,l,0,0,0] = validation_dict['mop']
+        ncvar[:,l,0,1,0] = validation_dict['mor']
+        ncvar[:,l,0,2,0] = validation_dict['msd']
+        ncvar[:,l,0,3,0] = validation_dict['nov']
 
     nc_time.units = validation_dict['time_unit']
     nc_time[:] = netCDF4.date2num(  validation_dict['datelst'],
@@ -185,7 +183,14 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
 
 
     # --- append some global attributes --- #
-    nc = Dataset(pathstr + filestr, 'r+')
+    nc = netCDF4.Dataset(os.path.join(outpath,\
+        'product_quality_stats_ARCTIC_ANALYSIS_FORECAST_WAV_002_014_'
+        + filedate.strftime('%Y')
+        + filedate.strftime('%m')
+        + '01-'
+        + filedate.strftime('%Y') + filedate.strftime('%m')
+        + str(calendar.monthrange(  filedate.year,
+                                    filedate.month)[1]) + '.nc'),'r+')
     print ("\nAppending global attribute to netcdf validation file ...")
     globalAttribs = {}
     globalAttribs["product"] = "ARCTIC_ANALYSIS_FORECAST_WAV_002_014"
@@ -201,15 +206,15 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         for i in range(len(platnan[0])):
             plat[platnan[0][i],platnan[1][i],platnan[2][i],
                 platnan[3][i],platnan[4][i]] = 9999.
-    alt = nc.variables['stats_VHM0_altimeter'][:]
-    altnan = (np.where(np.isnan(alt)))
-    if len(altnan[0])>0:
-        print("NaNs found for altimeter data")
-        for i in range(len(altnan[0])):
-            alt[altnan[0][i],altnan[1][i],altnan[2][i],
-                altnan[3][i],altnan[4][i]] = 9999.
-    nc.variables['stats_VHM0_platform'][:] = plat[:]
-    nc.variables['stats_VHM0_altimeter'][:] = alt[:]
+    #alt = nc.variables['stats_VHM0_altimeter'][:]
+    #altnan = (np.where(np.isnan(alt)))
+    #if len(altnan[0])>0:
+    #    print("NaNs found for altimeter data")
+    #    for i in range(len(altnan[0])):
+    #        alt[altnan[0][i],altnan[1][i],altnan[2][i],
+    #            altnan[3][i],altnan[4][i]] = 9999.
+    #nc.variables['stats_VHM0_platform'][:] = plat[:]
+    #nc.variables['stats_VHM0_altimeter'][:] = alt[:]
     nc.close()
     print ("fill values adjusted")
 
