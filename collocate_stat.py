@@ -111,8 +111,8 @@ could be chosen but it seems that this way it is more stable
 as there are many missing files and directories.
 '''
 tmpdate = args.sd
-#leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
-leadtimes = [84]
+leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
+#leadtimes = [228]
 while tmpdate <= args.ed:
     for lt in leadtimes:
         print('DATE: ',tmpdate)

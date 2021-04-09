@@ -10,6 +10,7 @@ from argparse import RawTextHelpFormatter
 
 # custom
 from satmod import satellite_class
+from modelmod import model_class
 from collocmod import collocation_class
 from utils import system_call
 
@@ -21,7 +22,7 @@ and dump data to monthly nc-file.
 If file exists, data is appended.
 
 Usage:
-./collocate_stat.py -sd 2021010100 -ed 2021013123 -stat all
+./collocate_sat.py -sd 2021010100 -ed 2021013123 -sat all
     """,
     formatter_class = RawTextHelpFormatter
     )
@@ -54,13 +55,13 @@ if args.ed is None:
     args.ed = datetime(now.year,now.month,now.day)-timedelta(minutes=1)
 else:
     args.ed = datetime(int(args.ed[0:4]),int(args.ed[4:6]),
-                int(args.ed[6:8]),int(args.ed[8:10]))
+                int(args.ed[6:8]),int(args.ed[8:10]))-timedelta(minutes=1)
 
 if args.var is None:
     args.var = 'Hs'
 
 if args.model is None:
-    args.model = 'mwam4'
+    args.model = 'ARCMFC3'
 
 if args.lt is None:
     args.lt = 0
@@ -70,6 +71,9 @@ if args.dist is None:
 
 if args.twin is None:
     args.twin = 30
+
+if (args.sat is None):
+    args.sat = 's3a'
 
 print(args)
 
@@ -91,24 +95,36 @@ with open(configdir,'r') as stream:
     satellite_dict=yaml.safe_load(stream)
 
 # settings
-if (args.sat is None):
-    args.sat = 's3a'
-
-date_incr = 1
+leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
 
 # --- program body --- #
-print('station:',station,'; with sensor:',sensor)
-sa_obj = satellite_class(sdate=args.sd,region=args.model,sat=args.sat,
-                         varalias=args.var,twin=args.twin)
-mc_obj = model_class(fc_date=args.sd,varalias=args.var)
-col_obj = collocation_class(mc_obj,sa_obj=sa_obj,distlim=args.dist)
-#col_obj = collocation_class(model=args.model,
-#                            sat_obj=sat_obj,
-#                            distlim=args.dist,
-#                            leadtime=args.lt,
-#                            date_incr=date_incr)
-# --- write to nc --- #
-col_obj.write_to_monthly_nc()
+tmpdate = args.sd
+while tmpdate <= args.ed:
+    sd = tmpdate
+    ed = tmpdate
+    sa_obj = satellite_class(sdate=sd,region=args.model,
+                             sat=args.sat, varalias=args.var,
+                             twin=args.twin)
+    for lt in leadtimes:
+        try:
+            print('DATE: ',tmpdate)
+            print('LEADTIME: ',lt)
+            mc_obj = model_class(fc_date=sd,varalias=args.var,
+                                model=args.model,leadtime=lt)
+            if 'col_obj' in locals():
+                col_obj = collocation_class(mc_obj=mc_obj,sa_obj=sa_obj,
+                                    distlim=args.dist,leadtime=lt,
+                                    col_obj=col_obj)
+            else:
+                col_obj = collocation_class(mc_obj=mc_obj,sa_obj=sa_obj,
+                                    distlim=args.dist,leadtime=lt)
+            # --- write to nc --- #
+            col_obj.write_to_monthly_nc()
+        except Exception as e:
+            print('No collocation!')
+            print(e)
+    del col_obj
+    tmpdate = tmpdate + timedelta(hours=12)
 
 print( '# Finished process of collecting satellite'
         + ' data, collocate with model,\n'

@@ -7,7 +7,9 @@ from dateutil.relativedelta import relativedelta
 import numpy as np
 import os
 import calendar
+from copy import deepcopy
 
+from ncmod import get_arcmfc_stats
 from validationmod import calc_rmsd
 
 """
@@ -18,8 +20,7 @@ Consists of:
     - create netcdf file skeleton
     - write to netcdf file
 """
-#leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
-leadtimes = [0, 12, 36, 60]
+leadtimes = [12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
 
 # get variable info
 configfile = os.path.abspath(os.path.join(os.path.dirname( __file__ ), \
@@ -33,15 +34,17 @@ now = datetime(2021,2,2)
 filedate = now - relativedelta(months=1) # converts to previous month
 
 def validation(filedate,leadtime,station_dict):
-    inpath = filedate.strftime('/home/patrikb/tmp_collocation/%Y/%m/')
+    inpath = filedate.strftime('/home/patrikb/tmp_collocation/ARCMFC3/%Y/%m/')
     mop,mor,nov,msd = [],[],[],[]
     datelst = []
     sdate = datetime(filedate.year, filedate.month,1)
     edate = datetime(filedate.year, filedate.month,
-            calendar.monthrange(filedate.year, filedate.month)[1],
-            23)
+            calendar.monthrange(filedate.year, filedate.month)[1],23)
     tmpdate = sdate
+    print('sdate',sdate)
+    print('edate',edate)
     while tmpdate <= edate:
+        print('tmpdate',tmpdate)
         mods = []
         obs = []
         # get data
@@ -66,14 +69,18 @@ def validation(filedate,leadtime,station_dict):
             nc.close()
             mods.append(mod)
             obs.append(ob)
-        datelst.append(tmpdate)
         # compute skill scores
-        mop.append(np.nanmean(mods))
-        mor.append(np.nanmean(obs))
-        nov.append(len(np.array(mods)[np.array(mods)!=np.nan]))
-        msd.append(calc_rmsd(np.array(mods),np.array(obs))[0])
+        mods = np.array(mods)
+        obs = np.array(obs)
+        comb = mods + obs
+        idx = np.array(range(len(comb)))[~np.isnan(comb)].astype('int')
+        mop.append(np.mean(mods[idx]))
+        mor.append(np.mean(obs[idx]))
+        nov.append(len(idx))
+        msd.append(calc_rmsd(mods,obs)[0])
         datelst.append(tmpdate)
-        tmpdate += timedelta(hours=12)
+        tmpdate += timedelta(hours=6)
+        
     validation_dict = { 'mop':mop,
                         'mor':mor,
                         'nov':nov,
@@ -122,28 +129,21 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
                                np.float64,
                                dimensions=('time')
                                )
-    #nc.createDimension('time',size=None)
     for name,dim in ncdims.items():
         nc.createDimension(name,size=dim)
 
-    #nc_time = nc.createVariable('time','f8',dimensions=('time'))
-    #nc_time[:] = netCDF4.date2num(time,units=time.units)
-    #nc_time.units = timeunit
     nc_time.long_name = 'validity time'
 
     nc_metricnames = nc.createVariable('metric_names','S1', \
                         dimensions=(u'metrics',u'string_length'))
     def split(word):
         return [char for char in word]
-    #nc_metricnames[:] = netCDF4.stringtochar(np.array(metric_names))
     for i in range(4):
         nc_metricnames[i,:] = split(metric_names[i])
 
     nc_areanames = nc.createVariable('area_names','S1', \
                     dimensions=(u'areas',u'string_length'))
     for i in range(3):
-        #nc_areanames[0] = netCDF4.stringtochar(\
-        #                np.array('North Sea and Norwegian Sea'.ljust(28)))
         nc_areanames[i,:] = split(area_names[i])
     nc_areanames.long_name = 'area names'
     nc_areanames.description = 'region over which statistics are aggregated'
@@ -173,12 +173,71 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         ncvar[:,l,0,2,0] = validation_dict['msd']
         ncvar[:,l,0,3,0] = validation_dict['nov']
 
-    nc_time.units = validation_dict['time_unit']
+    nc_time.units = "days since 2001-01-01 12:00:00 UTC"
     nc_time[:] = netCDF4.date2num(  validation_dict['datelst'],
-                                    units=validation_dict['time_unit'])
-    print ("Add altimeter statistics")
-    # not yet implemented
+                                    units="days since 2001-01-01 12:00:00 UTC")
 
+    print ("Add altimeter statistics")
+    end_date = netCDF4.num2date(nc_time[-1],units=nc_time.units)
+    start_date = netCDF4.num2date(nc_time[0],units=nc_time.units)
+    tmp_date = deepcopy(start_date)
+    M=np.ones([len(nc_time),10,1,4,1])*9999.
+    dictlst_all=[]
+    excepts_all=[]
+    count1 = 0
+    while (tmp_date <= end_date):
+        print (count1)
+        dictlst = []
+        excepts = []
+        count2 = 0
+        for lt in leadtimes:
+            inpath=('/home/patrikb/tmp_validation/ARCMFC3/'
+                    + tmp_date.strftime('%Y')
+                    + '/'
+                    + tmp_date.strftime('%m')
+                    + '/')
+            filename_stats = tmp_date.strftime(
+                                "Hs_ARCMFC3_vs_s3a_for_ARCMFC3_val_ts_lt"
+                                + "{:0>3d}".format(lt)
+                                + "h_%Y%m.nc")
+            print(inpath + filename_stats)
+            valid_dict, dtime = get_arcmfc_stats(inpath + filename_stats)
+            try:
+                idx = list(dtime).index(tmp_date)
+                dictlst.append(valid_dict)
+                dictnames=['mop','mor','msd','nov']
+                for i in range(len(dictnames)):
+                    M[count1,count2,0,i,0]=valid_dict[dictnames[i]][idx]
+                    #print(valid_dict[dictnames[i]][idx])
+            except ValueError:
+                pass
+            count2=count2+1
+        count1=count1+1
+        dictlst_all.append(dictlst)
+        excepts_all.append(excepts)
+        tmp_date = tmp_date + timedelta(hours=6)
+
+    # append to netcdf
+    varshape = nc.variables['stats_VHM0_platform'][:].shape
+    nc_stats_VHM0_altimeter = nc.createVariable(
+                        'stats_VHM0_altimeter',
+                        np.float64,
+                        dimensions=('time',
+                        'forecasts',
+                        'surface',
+                        'metrics',
+                        'areas',),
+                        fill_value=9999.)
+    nc.variables["stats_VHM0_altimeter"][:,:,:,:,1] = M[:,:,:,:,0]
+    nc_stats_VHM0_altimeter.standard_name = \
+                            "sea_surface_wave_significant_height"
+    nc_stats_VHM0_altimeter.parameter = "stats_VHM0_altimeter"
+    nc_stats_VHM0_altimeter.units = "m"
+    nc_stats_VHM0_altimeter.reference = \
+                            "wave data from Sentinel-3a altimeter"
+    nc_stats_VHM0_altimeter.reference_source = \
+                            "WAVE_GLO_WAV_L3_SWH_NRT_OBSERVATIONS_014_001"
+    # close netcdf
     nc.close()
 
 
@@ -206,15 +265,15 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         for i in range(len(platnan[0])):
             plat[platnan[0][i],platnan[1][i],platnan[2][i],
                 platnan[3][i],platnan[4][i]] = 9999.
-    #alt = nc.variables['stats_VHM0_altimeter'][:]
-    #altnan = (np.where(np.isnan(alt)))
-    #if len(altnan[0])>0:
-    #    print("NaNs found for altimeter data")
-    #    for i in range(len(altnan[0])):
-    #        alt[altnan[0][i],altnan[1][i],altnan[2][i],
-    #            altnan[3][i],altnan[4][i]] = 9999.
-    #nc.variables['stats_VHM0_platform'][:] = plat[:]
-    #nc.variables['stats_VHM0_altimeter'][:] = alt[:]
+    alt = nc.variables['stats_VHM0_altimeter'][:]
+    altnan = (np.where(np.isnan(alt)))
+    if len(altnan[0])>0:
+        print("NaNs found for altimeter data")
+        for i in range(len(altnan[0])):
+            alt[altnan[0][i],altnan[1][i],altnan[2][i],
+                altnan[3][i],altnan[4][i]] = 9999.
+    nc.variables['stats_VHM0_platform'][:] = plat[:]
+    nc.variables['stats_VHM0_altimeter'][:] = alt[:]
     nc.close()
     print ("fill values adjusted")
 
