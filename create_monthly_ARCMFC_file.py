@@ -185,6 +185,7 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
     dictlst_all=[]
     excepts_all=[]
     count1 = 0
+    # region: full domain
     while (tmp_date <= end_date):
         print (count1)
         dictlst = []
@@ -201,14 +202,13 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
                                 + "{:0>3d}".format(lt)
                                 + "h_%Y%m.nc")
             print(inpath + filename_stats)
-            valid_dict, dtime = get_arcmfc_stats(inpath + filename_stats)
             try:
+                valid_dict, dtime = get_arcmfc_stats(inpath + filename_stats)
                 idx = list(dtime).index(tmp_date)
                 dictlst.append(valid_dict)
                 dictnames=['mop','mor','msd','nov']
                 for i in range(len(dictnames)):
                     M[count1,count2,0,i,0]=valid_dict[dictnames[i]][idx]
-                    #print(valid_dict[dictnames[i]][idx])
             except ValueError:
                 pass
             count2=count2+1
@@ -218,7 +218,6 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         tmp_date = tmp_date + timedelta(hours=6)
 
     # append to netcdf
-    varshape = nc.variables['stats_VHM0_platform'][:].shape
     nc_stats_VHM0_altimeter = nc.createVariable(
                         'stats_VHM0_altimeter',
                         np.float64,
@@ -237,6 +236,51 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
                             "wave data from Sentinel-3a altimeter"
     nc_stats_VHM0_altimeter.reference_source = \
                             "WAVE_GLO_WAV_L3_SWH_NRT_OBSERVATIONS_014_001"
+
+    # region: Nordic Seas
+    end_date = netCDF4.num2date(nc_time[-1],units=nc_time.units)
+    start_date = netCDF4.num2date(nc_time[0],units=nc_time.units)
+    tmp_date = deepcopy(start_date)
+    M=np.ones([len(nc_time),10,1,4,1])*9999.
+    dictlst_all=[]
+    excepts_all=[]
+    count1 = 0
+    while (tmp_date <= end_date):
+        print (count1)
+        dictlst = []
+        excepts = []
+        count2 = 0
+        for lt in leadtimes:
+            inpath=('/home/patrikb/tmp_validation/ARCMFC3/'
+                    + tmp_date.strftime('%Y')
+                    + '/'
+                    + tmp_date.strftime('%m')
+                    + '/')
+            filename_stats = tmp_date.strftime(
+                                "Hs_ARCMFC3_vs_s3a_for_NordicSeas_val_ts_lt"
+                                + "{:0>3d}".format(lt)
+                                + "h_%Y%m.nc")
+            print(inpath + filename_stats)
+            try:
+                valid_dict, dtime = get_arcmfc_stats(inpath + filename_stats)
+                print(valid_dict)
+                idx = list(dtime).index(tmp_date)
+                dictlst.append(valid_dict)
+                dictnames=['mop','mor','msd','nov']
+                for i in range(len(dictnames)):
+                    M[count1,count2,0,i,0]=valid_dict[dictnames[i]][idx]
+            except (ValueError,TypeError):
+                pass
+            count2=count2+1
+        count1=count1+1
+        dictlst_all.append(dictlst)
+        excepts_all.append(excepts)
+        tmp_date = tmp_date + timedelta(hours=6)
+
+    # append to netcdf
+    print(M)
+    nc.variables["stats_VHM0_altimeter"][:,:,:,:,2] = M[:,:,:,:,0]
+
     # close netcdf
     nc.close()
 

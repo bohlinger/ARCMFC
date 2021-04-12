@@ -36,6 +36,8 @@ parser.add_argument("-sat", metavar='satname',
     help="satellite name")
 parser.add_argument("-model", metavar='modelname',
     help="model name")
+parser.add_argument("-region", metavar='region',
+    help="region name")
 parser.add_argument("-lt", metavar='leadtime',
     help="leadtime")
 parser.add_argument("-dist", metavar='distance',
@@ -75,6 +77,9 @@ if args.twin is None:
 if (args.sat is None):
     args.sat = 's3a'
 
+if args.region is None:
+    args.region = args.model
+
 print(args)
 
 print( '# Start process of collecting satellite'
@@ -102,7 +107,7 @@ tmpdate = args.sd
 while tmpdate <= args.ed:
     sd = tmpdate
     ed = tmpdate
-    sa_obj = satellite_class(sdate=sd,region=args.model,
+    sa_obj = satellite_class(sdate=sd,region=args.region,
                              sat=args.sat, varalias=args.var,
                              twin=args.twin)
     for lt in leadtimes:

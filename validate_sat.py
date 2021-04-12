@@ -136,7 +136,11 @@ while tmpdate <= args.ed:
                                         leadtime=leadtimestr)
             nc = netCDF4.Dataset(inpathtofile,mode='r')
             mods = np.array(nc.variables['model_values'])
+            mods[mods>30] = np.nan
+            mods[mods<0] = np.nan
             obs = np.array(nc.variables['obs_values'])
+            obs[obs>30] = np.nan
+            obs[obs<0] = np.nan
             time = nc.variables['time']
             time_unit = time.units
             dtime_tmp = netCDF4.num2date(time[:],time.units)
