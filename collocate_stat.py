@@ -32,6 +32,8 @@ parser.add_argument("-var", metavar='varname',
     help="variable name")
 parser.add_argument("-station", metavar='stationname',
     help="station name")
+parser.add_argument("-sensor", metavar='sensorname',
+    help="ssensor name")
 parser.add_argument("-model", metavar='modelname',
     help="model name")
 parser.add_argument("-lt", metavar='leadtime',
@@ -87,41 +89,47 @@ else:
 
 date_incr = 1 # model time step
 
-def get_and_store_data(platformlst,sd,ed,var,date_incr,model,lt,dist):
+def get_and_store_data(platformlst,sd,ed,var,date_incr,model,leadtimes,dist):
     for station in platformlst:
-        for sensor in station_dict['platform'][station]['sensor']:
-            try:
-                print('station:',station,'; with sensor:',sensor)
-                st_obj = station_class(station,sensor,sd,ed,
-                                               varalias=var)
-                col_obj = collocation_class(model=model,st_obj=st_obj,
+        if args.sensor is None:
+            sensorlst = station_dict['platform'][station]['sensor'].keys()
+        else: sensorlst = [args.sensor]
+        for sensor in sensorlst:
+            st_obj = station_class(station,sensor,sd,ed,
+                                    varalias=var,
+                                    superobserve=True,
+                                    superob='block_mean',
+                                    outlier_detection='gam',
+                                    missing_data='impute',
+                                    date_incr=1)
+            for lt in leadtimes:
+                print('from:',sd,'to',ed)
+                print('leadtime:',lt)
+                try:
+                    print('station:',station,\
+                          '; with sensor:',sensor,\
+                          '; and model:',model)
+                    col_obj = collocation_class(model=model,
+                                                st_obj=st_obj,
                                                 distlim=dist,
                                                 leadtime=lt,
                                                 date_incr=date_incr)
-                # --- write to nc --- #
-                col_obj.write_to_monthly_nc()
-            except Exception as e:
-                print(e)
+                    # --- write to nc --- #
+                    col_obj.write_to_monthly_nc()
+                except Exception as e:
+                    print(e)
 
 # --- program body --- #
 '''
 Since station data comes in daily files I choose a daily loop
-from sd to ed. I also choose 12hourly steps. Any time period 
-could be chosen but it seems that this way it is more stable 
-as there are many missing files and directories.
+from sd to ed.
 '''
 tmpdate = args.sd
-leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
-#leadtimes = [228]
-while tmpdate <= args.ed:
-    for lt in leadtimes:
-        print('DATE: ',tmpdate)
-        print('LEADTIME: ',lt)
-        sd = tmpdate
-        ed = tmpdate
-        get_and_store_data( platformlst,sd,ed,args.var,
-                            date_incr,args.model,lt,args.dist)
-    tmpdate = tmpdate + timedelta(hours=12)
+#leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
+leadtimes = [12]
+
+get_and_store_data( platformlst,args.sd,args.ed,args.var,
+                    date_incr,args.model,leadtimes,args.dist)
 
 print( '# Finished process of collecting platform'
         + ' data, collocate with model,\n'
