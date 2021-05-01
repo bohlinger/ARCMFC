@@ -101,6 +101,7 @@ with open(configdir,'r') as stream:
 
 # settings
 leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
+#leadtimes = [132]
 
 # --- program body --- #
 tmpdate = args.sd
@@ -128,7 +129,8 @@ while tmpdate <= args.ed:
         except Exception as e:
             print('No collocation!')
             print(e)
-    del col_obj
+    if 'col_obj' in locals():
+        del col_obj
     tmpdate = tmpdate + timedelta(hours=12)
 
 print( '# Finished process of collecting satellite'

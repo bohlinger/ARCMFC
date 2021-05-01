@@ -51,7 +51,7 @@ def validation(filedate,leadtime,station_dict):
         for platform in station_dict['platform']:
             sensor = list(station_dict['platform'][platform]\
                                         ['sensor'].keys())[0]
-            filestr = filedate.strftime(   "Hs_ARCMFC3_vs_" 
+            filestr = filedate.strftime(   "superobbed_Hs_ARCMFC3_vs_" 
                                     + platform + "_"
                                     + sensor + "_coll_ts_lt" 
                                     + "{:0>3d}".format(leadtime) 
