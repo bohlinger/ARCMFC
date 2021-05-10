@@ -19,7 +19,7 @@ from ncmod import dumptonc_stats
 # --- parser --- #
 parser = argparse.ArgumentParser(
     description="""
-Validate collocated data from satellite and wave model,\n 
+Validate collocated data from satellite and wave model,\n
 and dump data to monthly nc-file.
 If file exists, data is appended.
 
@@ -88,8 +88,8 @@ print( '# Start process of validating satellite vs wave model data'
 tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
 wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
 
-configdir = os.path.abspath(os.path.join(wavydir, 
-                                         '..', 
+configdir = os.path.abspath(os.path.join(wavydir,
+                                         '..',
                                          'config/'))
 with open(configdir+'/collocation_specs.yaml','r') as stream:
     collocation_dict=yaml.safe_load(stream)
@@ -131,7 +131,7 @@ while tmpdate <= args.ed:
                                         tmpdate,
                                         varalias=args.var,
                                         model=args.model,
-                                        satellite=args.sat,
+                                        mission=args.sat,
                                         region=args.region,
                                         leadtime=leadtimestr)
             nc = netCDF4.Dataset(inpathtofile,mode='r')
@@ -150,7 +150,7 @@ while tmpdate <= args.ed:
             # validate
             validation_dict = validate_collocated_values(\
                                 mods=mods,obs=obs,dtime=dtime,\
-                                date=tmpdate,twin=args.twin)
+                                target_t=[tmpdate],twin=args.twin)
             # dump to nc-file
             title='validation file'
             outpathtofile = make_pathtofile(outtmppath,
@@ -158,7 +158,7 @@ while tmpdate <= args.ed:
                                         tmpdate,
                                         varalias=args.var,
                                         model=args.model,
-                                        satellite=args.sat,
+                                        mission=args.sat,
                                         region=args.region,
                                         leadtime=leadtimestr)
             # --- write to nc --- #

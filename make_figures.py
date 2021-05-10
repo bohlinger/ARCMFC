@@ -57,7 +57,8 @@ SI_lst = []
 nov_lst = []
 for element in forecasts:
 
-    inpath='/home/patrikb/tmp_validation/ARCMFC3/2021/01/'
+    inpath=fc_date.strftime(
+                '/home/patrikb/tmp_validation/' + model + '/%Y/%m/')
 
     filename_stats = fc_date.strftime(  'Hs_' + model + "_vs_"
                                         + sat
@@ -98,7 +99,8 @@ sHs_lst = []
 mHs_lst = []
 for element in forecasts:
 
-    inpath='/home/patrikb/tmp_collocation/ARCMFC3/2021/01/'
+    inpath=fc_date.strftime(
+                '/home/patrikb/tmp_collocation/' + model + '/%Y/%m/')
 
     filename_coll = fc_date.strftime('Hs_' + model + "_vs_"
                                     + sat

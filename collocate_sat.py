@@ -93,15 +93,14 @@ tmppath = str(system_call('echo $PYTHONPATH'))[2:-3]
 wavydir = [s for s in tmppath.split(":") if 'wavy' in s][0]
 
 # get variable info
-configdir = os.path.abspath(os.path.join(wavydir, 
-                                         '..', 
+configdir = os.path.abspath(os.path.join(wavydir,
+                                         '..',
                                          'config/satellite_specs.yaml'))
 with open(configdir,'r') as stream:
     satellite_dict=yaml.safe_load(stream)
 
 # settings
 leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
-#leadtimes = [132]
 
 # --- program body --- #
 tmpdate = args.sd
@@ -117,12 +116,12 @@ while tmpdate <= args.ed:
             print('LEADTIME: ',lt)
             mc_obj = model_class(fc_date=sd,varalias=args.var,
                                 model=args.model,leadtime=lt)
-            if 'col_obj' in locals():
-                col_obj = collocation_class(mc_obj=mc_obj,sa_obj=sa_obj,
-                                    distlim=args.dist,leadtime=lt,
-                                    col_obj=col_obj)
-            else:
-                col_obj = collocation_class(mc_obj=mc_obj,sa_obj=sa_obj,
+            #if 'col_obj' in locals():
+            #    col_obj = collocation_class(mc_obj=mc_obj,obs_obj=sa_obj,
+            #                        distlim=args.dist,leadtime=lt,
+            #                        col_obj=col_obj)
+            #else:
+            col_obj = collocation_class(mc_obj=mc_obj,obs_obj=sa_obj,
                                     distlim=args.dist,leadtime=lt)
             # --- write to nc --- #
             col_obj.write_to_monthly_nc()

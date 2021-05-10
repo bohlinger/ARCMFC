@@ -99,6 +99,7 @@ def get_and_store_data(platformlst,sd,ed,var,date_incr,model,leadtimes,dist):
                                     varalias=var,
                                     superobserve=True,
                                     superob='block_mean',
+                                    stwin=1,
                                     outlier_detection='gam',
                                     missing_data='impute',
                                     date_incr=1)
@@ -110,7 +111,7 @@ def get_and_store_data(platformlst,sd,ed,var,date_incr,model,leadtimes,dist):
                           '; with sensor:',sensor,\
                           '; and model:',model)
                     col_obj = collocation_class(model=model,
-                                                st_obj=st_obj,
+                                                obs_obj=st_obj,
                                                 distlim=dist,
                                                 leadtime=lt,
                                                 date_incr=date_incr)
@@ -126,7 +127,7 @@ from sd to ed.
 '''
 tmpdate = args.sd
 #leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
-leadtimes = [204,228]
+leadtimes = [108,132]
 
 get_and_store_data( platformlst,args.sd,args.ed,args.var,
                     date_incr,args.model,leadtimes,args.dist)
