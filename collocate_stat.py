@@ -127,7 +127,7 @@ from sd to ed.
 '''
 tmpdate = args.sd
 #leadtimes = [0, 12, 36, 60, 84, 108, 132, 156, 180, 204, 228]
-leadtimes = [108,132]
+leadtimes = [204,228]
 
 get_and_store_data( platformlst,args.sd,args.ed,args.var,
                     date_incr,args.model,leadtimes,args.dist)

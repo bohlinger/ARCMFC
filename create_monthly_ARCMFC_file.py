@@ -29,8 +29,8 @@ with open(configfile,'r') as stream:
     station_dict=yaml.safe_load(stream)
 
 
-#now = datetime.now()
-now = datetime(2021,2,2)
+now = datetime.now()
+#now = datetime(2021,2,5)
 filedate = now - relativedelta(months=1) # converts to previous month
 
 def validation(filedate,leadtime,station_dict):
@@ -51,10 +51,10 @@ def validation(filedate,leadtime,station_dict):
         for platform in station_dict['platform']:
             sensor = list(station_dict['platform'][platform]\
                                         ['sensor'].keys())[0]
-            filestr = filedate.strftime(   "superobbed_Hs_ARCMFC3_vs_" 
+            filestr = filedate.strftime(   "superobbed_Hs_ARCMFC3_vs_"
                                     + platform + "_"
-                                    + sensor + "_coll_ts_lt" 
-                                    + "{:0>3d}".format(leadtime) 
+                                    + sensor + "_coll_ts_lt"
+                                    + "{:0>3d}".format(leadtime)
                                     + "h_%Y%m.nc" )
             nc = netCDF4.Dataset(inpath+filestr,mode='r')
             time = nc.variables['time']
@@ -80,7 +80,7 @@ def validation(filedate,leadtime,station_dict):
         msd.append(calc_rmsd(mods,obs)[0])
         datelst.append(tmpdate)
         tmpdate += timedelta(hours=6)
-        
+
     validation_dict = { 'mop':mop,
                         'mor':mor,
                         'nov':nov,
@@ -100,7 +100,7 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         + filedate.strftime('%m')
         + '01-'
         + filedate.strftime('%Y') + filedate.strftime('%m')
-        + str(calendar.monthrange(  filedate.year, 
+        + str(calendar.monthrange(  filedate.year,
                                     filedate.month)[1]) + '.nc'),'w')
     nc.contact = 'patrikb@met.no'
     nc.product = 'Arctic wave model WAM'
@@ -112,9 +112,9 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
 
     ncdims = {  'string_length':28, 'areas':3, 'metrics':4, \
                 'surface':1, 'forecasts':10  } # and time, unlim
-    metric_names = [name.ljust(28) for name in ["mean of product", 
-                                                "mean of reference", 
-                                                "mean square difference", 
+    metric_names = [name.ljust(28) for name in ["mean of product",
+                                                "mean of reference",
+                                                "mean square difference",
                                                 "number of data values"]]
     area_names = [name.ljust(28) for name in ["North Sea and Norwegian Sea",
                                               "Full domain",
@@ -153,9 +153,9 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
     nc_leadtime.units = 'hours'
     nc_leadtime[:] = np.arange(12,229,24)
 
-    ncvar = nc.createVariable('stats_VHM0_platform','f4', 
+    ncvar = nc.createVariable('stats_VHM0_platform','f4',
                 dimensions=('time', 'forecasts', 'surface', \
-                            'metrics', 'areas'), fill_value=9999.)
+                            'metrics', 'areas'), fill_value=1e35)#9999.)
     ncvar.standard_name = 'sea_surface_wave_significant_height'
     ncvar.parameter = 'stats_VHM0_platform'
     ncvar.units = 'm'
@@ -181,7 +181,7 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
     end_date = netCDF4.num2date(nc_time[-1],units=nc_time.units)
     start_date = netCDF4.num2date(nc_time[0],units=nc_time.units)
     tmp_date = deepcopy(start_date)
-    M=np.ones([len(nc_time),10,1,4,1])*9999.
+    M=np.ones([len(nc_time),10,1,4,1])*1e35#9999.
     dictlst_all=[]
     excepts_all=[]
     count1 = 0
@@ -226,7 +226,7 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
                         'surface',
                         'metrics',
                         'areas',),
-                        fill_value=9999.)
+                        fill_value=1e35)#9999.)
     nc.variables["stats_VHM0_altimeter"][:,:,:,:,1] = M[:,:,:,:,0]
     nc_stats_VHM0_altimeter.standard_name = \
                             "sea_surface_wave_significant_height"
@@ -241,7 +241,7 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
     end_date = netCDF4.num2date(nc_time[-1],units=nc_time.units)
     start_date = netCDF4.num2date(nc_time[0],units=nc_time.units)
     tmp_date = deepcopy(start_date)
-    M=np.ones([len(nc_time),10,1,4,1])*9999.
+    M=np.ones([len(nc_time),10,1,4,1])*1e35#9999.
     dictlst_all=[]
     excepts_all=[]
     count1 = 0
@@ -278,7 +278,7 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         tmp_date = tmp_date + timedelta(hours=6)
 
     # append to netcdf
-    print(M)
+    #print(M)
     nc.variables["stats_VHM0_altimeter"][:,:,:,:,2] = M[:,:,:,:,0]
 
     # close netcdf
@@ -308,14 +308,16 @@ def create_monthly_nc(filedate,leadtimes,station_dict):
         print("NaNs found for platform data")
         for i in range(len(platnan[0])):
             plat[platnan[0][i],platnan[1][i],platnan[2][i],
-                platnan[3][i],platnan[4][i]] = 9999.
+                #platnan[3][i],platnan[4][i]] = 9999.
+                platnan[3][i],platnan[4][i]] = 1e35
     alt = nc.variables['stats_VHM0_altimeter'][:]
     altnan = (np.where(np.isnan(alt)))
     if len(altnan[0])>0:
         print("NaNs found for altimeter data")
         for i in range(len(altnan[0])):
             alt[altnan[0][i],altnan[1][i],altnan[2][i],
-                altnan[3][i],altnan[4][i]] = 9999.
+                #altnan[3][i],altnan[4][i]] = 9999.
+                altnan[3][i],altnan[4][i]] = 1e35
     nc.variables['stats_VHM0_platform'][:] = plat[:]
     nc.variables['stats_VHM0_altimeter'][:] = alt[:]
     nc.close()
