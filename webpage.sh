@@ -11,8 +11,8 @@ MONTH=05
 # Create graph plots based on validation results:
 
 # image files
-Imgpath=/home/patrikb/tmp_validation_figures/${YEAR}/${MONTH}/
-Webpath=/home/patrikb/tmp_web_page/
+Imgpath=/lustre/storeB/project/fou/om/waveverification/ARCMFC3/satellites/altimetry/s3a/ValidationFigures/${YEAR}/${MONTH}/
+Webpath=/lustre/storeB/project/fou/om/waveverification/ARCMFC3/satellites/altimetry/s3a/WebPage/
 mkdir -p ${Webpath}${YEAR}-${MONTH}/
 cp ${Imgpath}* ${Webpath}${YEAR}-${MONTH}/.
 
