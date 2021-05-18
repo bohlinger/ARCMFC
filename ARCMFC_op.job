@@ -1,0 +1,33 @@
+#!/bin/bash -fxe
+#$ -N collocate_sat_alt_l3
+#$ -l h_rt=01:00:00
+#$ -S /bin/bash
+#$ -l h_vmem=2G
+#$ -q research-el7.q
+#$ -M patrikb@met.no
+#$ -m abe
+#$ -o /home/patrikb/ARCMFC/
+#$ -cwd 
+#$ -j y
+# ---------------------------
+
+export PATH="/home/patrikb/miniconda3/bin/:$PATH"
+source /home/patrikb/miniconda3/etc/profile.d/conda.sh
+conda activate wavy
+
+export PYTHONPATH=$PYTHONPATH:/home/patrikb/wavy/wavy
+
+cd /home/patrikb/ARCMFC
+
+python collocate_sat.py -region ARCMFC3 -model ARCMFC3 -sat s3a
+python collocate_sat.py -region NordicSeas -model ARCMFC3 -sat s3a
+python validate_sat.py -region ARCMFC3 -model ARCMFC3 -sat s3a
+python validate_sat.py -region NordicSeas -model ARCMFC3 -sat s3a
+python make_figures.py -region ARCMFC3 -model ARCMFC3 -sat s3a
+python make_figures.py -region NordicSeas -model ARCMFC3 -sat s3a
+
+cd /lustre/storeB/project/fou/om/waveverification/ARCMFC3/satellites/altimetry/s3a/WebPage
+sh webpage.sh ARCMFC3
+sh webpage.sh NordicSeas
+
+echo Finished

@@ -1,7 +1,5 @@
 #/usr/bin/env python
 import sys
-sys.path.append(r'/home/patrikb/wavy/wavy')
-
 import os
 from datetime import datetime, timedelta
 from copy import deepcopy
@@ -58,7 +56,9 @@ nov_lst = []
 for element in forecasts:
 
     inpath=fc_date.strftime(
-                '/home/patrikb/tmp_validation/' + model + '/%Y/%m/')
+                '/lustre/storeB/project/fou/om/waveverification/' 
+                + model + '/satellites/altimetry/' 
+                + sat + '/ValidationFiles/%Y/%m/')
 
     filename_stats = fc_date.strftime(  'Hs_' + model + "_vs_"
                                         + sat
@@ -100,7 +100,9 @@ mHs_lst = []
 for element in forecasts:
 
     inpath=fc_date.strftime(
-                '/home/patrikb/tmp_collocation/' + model + '/%Y/%m/')
+                '/lustre/storeB/project/fou/om/waveverification/'
+                + model + '/satellites/altimetry/'
+                + sat + '/CollocationFiles/%Y/%m/')
 
     filename_coll = fc_date.strftime('Hs_' + model + "_vs_"
                                     + sat
@@ -125,7 +127,9 @@ for i in range(len(forecasts)):
     make_val_scatter_fig_op(mHs_lst[i],sHs_lst[i],filename_fig,forecasts,i)
 
 # clean up
-outpath=('/home/patrikb/tmp_validation_figures/' + fc_date.strftime('%Y/%m/'))
+outpath = fc_date.strftime('/lustre/storeB/project/fou/om/waveverification/'
+         + model + '/satellites/altimetry/'
+         + sat + '/ValidationFiles/%Y/%m/')
 cmd = 'mkdir -p ' + outpath
 os.system(cmd)
 cmd = 'mv ARCMFC3*_fig_val*.png ' + outpath
