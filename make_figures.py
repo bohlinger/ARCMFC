@@ -129,7 +129,7 @@ for i in range(len(forecasts)):
 # clean up
 outpath = fc_date.strftime('/lustre/storeB/project/fou/om/waveverification/'
          + model + '/satellites/altimetry/'
-         + sat + '/ValidationFiles/%Y/%m/')
+         + sat + '/ValidationFigures/%Y/%m/')
 cmd = 'mkdir -p ' + outpath
 os.system(cmd)
 cmd = 'mv ARCMFC3*_fig_val*.png ' + outpath

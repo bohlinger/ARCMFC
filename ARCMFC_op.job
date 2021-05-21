@@ -23,8 +23,8 @@ python collocate_sat.py -region ARCMFC3 -model ARCMFC3 -sat s3a
 python collocate_sat.py -region NordicSeas -model ARCMFC3 -sat s3a
 python validate_sat.py -region ARCMFC3 -model ARCMFC3 -sat s3a
 python validate_sat.py -region NordicSeas -model ARCMFC3 -sat s3a
-python make_figures.py -region ARCMFC3 -model ARCMFC3 -sat s3a
-python make_figures.py -region NordicSeas -model ARCMFC3 -sat s3a
+python make_figures.py -reg ARCMFC3 -mod ARCMFC3 -sat s3a
+python make_figures.py -reg NordicSeas -mod ARCMFC3 -sat s3a
 
 cd /lustre/storeB/project/fou/om/waveverification/ARCMFC3/satellites/altimetry/s3a/WebPage
 sh webpage.sh ARCMFC3
