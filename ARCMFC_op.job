@@ -1,5 +1,5 @@
 #!/bin/bash -fxe
-#$ -N collocate_sat_alt_l3
+#$ -N ARCMFC_op
 #$ -l h_rt=01:00:00
 #$ -S /bin/bash
 #$ -l h_vmem=2G
